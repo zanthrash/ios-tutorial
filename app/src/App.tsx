@@ -1,31 +1,62 @@
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { PlanContext } from './PlanContext';
 import Sidebar from './components/Sidebar';
+import DayView from './components/DayView';
+import PhaseView from './components/PhaseView';
+import MasteryGate from './components/MasteryGate';
+import ResourcesPanel from './components/ResourcesPanel';
 import { fetchPlan } from './api';
 import type { PlanResponse } from '../shared/types';
 
-function DayPlaceholder() {
-  const { phaseId, weekN, daySlug } = useParams<{
-    phaseId: string;
-    weekN: string;
-    daySlug: string;
-  }>();
-  const dayId = `${phaseId}/week-${weekN}/${daySlug}`;
-  return (
-    <div style={{ padding: '1.5rem' }}>
-      <code style={{ fontSize: '0.9rem', color: '#666' }}>{dayId}</code>
-      <p style={{ color: '#999', marginTop: '0.5rem' }}>
-        Day rendering coming in Phase 2.
-      </p>
-    </div>
+function Dashboard({ plan }: { plan: PlanResponse }) {
+  const totalPhases = plan.phases.length;
+  const totalDays = plan.phases.reduce(
+    (sum, p) => sum + p.weeks.reduce((s, w) => s + w.days.length, 0),
+    0
   );
-}
 
-function Dashboard() {
   return (
-    <div style={{ padding: '1.5rem' }}>
-      <h1 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>iOS Tutorial</h1>
-      <p style={{ color: '#666' }}>Select a day from the sidebar to get started.</p>
+    <div className="max-w-2xl mx-auto px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-2">
+        iOS Mastery Curriculum
+      </h1>
+      <p className="text-gray-500 dark:text-gray-400 mb-8">
+        {totalPhases} phases · {totalDays} days · 12–18 month program
+      </p>
+
+      <ul className="space-y-3">
+        {plan.phases.map((phase) => {
+          const days = phase.weeks.reduce((s, w) => s + w.days.length, 0);
+          return (
+            <li key={phase.id}>
+              <Link
+                to={`/phase/${phase.id}`}
+                className="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors"
+              >
+                <div className="flex items-baseline justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">
+                      Phase {phase.number}
+                    </span>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                      {phase.title}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                      {phase.weeks.length}w · {days}d
+                    </p>
+                    {phase.duration && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{phase.duration}</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -37,37 +68,56 @@ function AppInner() {
 
   useEffect(() => {
     fetchPlan()
-      .then((data) => { setPlan(data); setLoading(false); })
-      .catch((e) => { setError(String(e)); setLoading(false); });
+      .then((data) => {
+        setPlan(data);
+        setLoading(false);
+      })
+      .catch((e) => {
+        setError(String(e));
+        setLoading(false);
+      });
   }, []);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
-      <div
-        style={{
-          width: 320,
-          minWidth: 320,
-          borderRight: '1px solid #ddd',
-          overflowY: 'auto',
-          background: '#fafafa',
-        }}
-      >
-        {loading && <p style={{ padding: '1rem', color: '#999' }}>Loading…</p>}
-        {error && <p style={{ padding: '1rem', color: 'red' }}>Error: {error}</p>}
+      <aside className="w-80 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 overflow-hidden flex flex-col">
+        {loading && (
+          <p className="p-4 text-sm text-gray-400">Loading plan…</p>
+        )}
+        {error && (
+          <p className="p-4 text-sm text-red-500">Error: {error}</p>
+        )}
         {plan && <Sidebar phases={plan.phases} />}
-      </div>
+      </aside>
 
-      {/* Main pane */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route
-            path="/phase/:phaseId/week/:weekN/day/:daySlug"
-            element={<DayPlaceholder />}
-          />
-        </Routes>
-      </div>
+      {/* Main content pane */}
+      <main className="flex-1 overflow-y-auto">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-400">Loading…</p>
+          </div>
+        )}
+        {error && (
+          <div className="p-8">
+            <p className="text-red-500">Failed to load plan: {error}</p>
+          </div>
+        )}
+        {plan && (
+          <PlanContext.Provider value={plan}>
+            <Routes>
+              <Route path="/" element={<Dashboard plan={plan} />} />
+              <Route path="/phase/:phaseId" element={<PhaseView />} />
+              <Route path="/phase/:phaseId/mastery" element={<MasteryGate />} />
+              <Route path="/phase/:phaseId/resources" element={<ResourcesPanel />} />
+              <Route
+                path="/phase/:phaseId/week/:weekN/day/:daySlug"
+                element={<DayView />}
+              />
+            </Routes>
+          </PlanContext.Provider>
+        )}
+      </main>
     </div>
   );
 }
