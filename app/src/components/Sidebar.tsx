@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import type { Phase, Week, ProgressResponse } from '../../shared/types';
+import SearchBar from './SearchBar';
 
 interface SidebarProps {
   phases: Phase[];
@@ -95,6 +96,9 @@ export default function Sidebar({ phases, progress }: SidebarProps) {
         >
           iOS Tutorial
         </Link>
+
+        {/* Search */}
+        <SearchBar />
 
         {/* Overall progress bar */}
         <div>

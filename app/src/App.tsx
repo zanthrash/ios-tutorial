@@ -7,6 +7,7 @@ import DayView from './components/DayView';
 import PhaseView from './components/PhaseView';
 import MasteryGate from './components/MasteryGate';
 import ResourcesPanel from './components/ResourcesPanel';
+import SearchResults from './components/SearchResults';
 import { fetchPlan, fetchProgress } from './api';
 import type { PlanResponse, ProgressResponse } from '../shared/types';
 
@@ -115,6 +116,7 @@ function AppInner() {
             <ProgressProvider initialProgress={progress}>
               <Routes>
                 <Route path="/" element={<Dashboard plan={plan} />} />
+                <Route path="/search" element={<SearchResults />} />
                 <Route path="/phase/:phaseId" element={<PhaseView />} />
                 <Route path="/phase/:phaseId/mastery" element={<MasteryGate />} />
                 <Route path="/phase/:phaseId/resources" element={<ResourcesPanel />} />

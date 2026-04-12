@@ -83,3 +83,16 @@ export type NoteResponse = {
   body: string;
   updated_at: string;
 };
+
+export type SearchResult = {
+  type: 'day-note' | 'phase-note' | 'plan';
+  id: string;
+  label: string;
+  snippet: string;
+  url: string;
+};
+
+export type SearchResponse = {
+  query: string;
+  results: SearchResult[];
+};

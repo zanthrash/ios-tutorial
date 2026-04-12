@@ -1,4 +1,4 @@
-import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse, ResourceStatus } from '../shared/types';
+import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse, ResourceStatus, SearchResponse } from '../shared/types';
 
 export async function fetchPlan(): Promise<PlanResponse> {
   const res = await fetch('/api/plan');
@@ -69,4 +69,10 @@ export async function putPhaseNote(phaseId: string, body: string): Promise<NoteR
   });
   if (!res.ok) throw new Error(`Failed to save phase note: ${res.status}`);
   return res.json() as Promise<NoteResponse>;
+}
+
+export async function searchContent(q: string): Promise<SearchResponse> {
+  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+  if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+  return res.json() as Promise<SearchResponse>;
 }
