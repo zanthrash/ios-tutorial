@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PlanContext } from './PlanContext';
 import { ProgressProvider } from './ProgressContext';
 import Sidebar from './components/Sidebar';
@@ -8,6 +8,8 @@ import PhaseView from './components/PhaseView';
 import MasteryGate from './components/MasteryGate';
 import ResourcesPanel from './components/ResourcesPanel';
 import SearchResults from './components/SearchResults';
+import KeyboardHelp from './components/KeyboardHelp';
+import { useGlobalKeyboard } from './hooks/useGlobalKeyboard';
 import { fetchPlan, fetchProgress } from './api';
 import type { PlanResponse, ProgressResponse } from '../shared/types';
 
@@ -68,6 +70,9 @@ function AppInner() {
   const [progress, setProgress] = useState<ProgressResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
+
+  const toggleHelp = useCallback(() => setShowHelp((v) => !v), []);
 
   useEffect(() => {
     Promise.all([fetchPlan(), fetchProgress()])
@@ -82,6 +87,9 @@ function AppInner() {
       });
   }, []);
 
+  // Global keyboard shortcuts: j/k navigation, ? help
+  useGlobalKeyboard(plan, toggleHelp);
+
   const emptyProgress: ProgressResponse = { days: {}, checklists: {}, resources: {} };
 
   return (
@@ -95,7 +103,11 @@ function AppInner() {
           <p className="p-4 text-sm text-red-500">Error: {error}</p>
         )}
         {plan && (
-          <Sidebar phases={plan.phases} progress={progress ?? emptyProgress} />
+          <Sidebar
+            phases={plan.phases}
+            progress={progress ?? emptyProgress}
+            onShowHelp={toggleHelp}
+          />
         )}
       </aside>
 
@@ -129,6 +141,9 @@ function AppInner() {
           </PlanContext.Provider>
         )}
       </main>
+
+      {/* Keyboard help overlay */}
+      {showHelp && <KeyboardHelp onClose={() => setShowHelp(false)} />}
     </div>
   );
 }

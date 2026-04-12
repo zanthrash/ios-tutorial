@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { fetchDayNote, putDayNote, fetchPhaseNote, putPhaseNote } from '../api';
 import Markdown from './Markdown';
 
@@ -9,14 +9,34 @@ type Props = {
   scopeId: string;
 };
 
-export default function NotesEditor({ scope, scopeId }: Props) {
+export interface NotesEditorHandle {
+  focus: () => void;
+}
+
+const NotesEditor = forwardRef<NotesEditorHandle, Props>(function NotesEditor(
+  { scope, scopeId },
+  ref,
+) {
   const [body, setBody] = useState('');
   const [preview, setPreview] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [loaded, setLoaded] = useState(false);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus() {
+      // Switch out of preview mode so the textarea is mounted
+      setPreview(false);
+      // Wait one tick for the textarea to render, then focus
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 0);
+    },
+  }));
 
   // Load note when scope/scopeId changes
   useEffect(() => {
@@ -67,7 +87,10 @@ export default function NotesEditor({ scope, scopeId }: Props) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Notes
+          <span className="ml-1.5 text-[10px] font-normal text-gray-400 dark:text-gray-600 font-mono">n</span>
+        </h3>
         <div className="flex items-center gap-3">
           {saveState === 'saving' && (
             <span className="text-xs text-gray-400 dark:text-gray-500">Saving…</span>
@@ -100,6 +123,7 @@ export default function NotesEditor({ scope, scopeId }: Props) {
         </div>
       ) : (
         <textarea
+          ref={textareaRef}
           value={body}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Add notes… (markdown supported)"
@@ -109,4 +133,6 @@ export default function NotesEditor({ scope, scopeId }: Props) {
       )}
     </div>
   );
-}
+});
+
+export default NotesEditor;

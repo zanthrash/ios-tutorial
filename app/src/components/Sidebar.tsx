@@ -6,6 +6,7 @@ import SearchBar from './SearchBar';
 interface SidebarProps {
   phases: Phase[];
   progress: ProgressResponse;
+  onShowHelp: () => void;
 }
 
 function statusDot(status: string | undefined) {
@@ -28,7 +29,7 @@ function StatusIndicator({ status }: { status: string | undefined }) {
   return <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-transparent inline-block" />;
 }
 
-export default function Sidebar({ phases, progress }: SidebarProps) {
+export default function Sidebar({ phases, progress, onShowHelp }: SidebarProps) {
   const location = useLocation();
 
   function activePhaseId(): string | null {
@@ -116,14 +117,25 @@ export default function Sidebar({ phases, progress }: SidebarProps) {
           </div>
         </div>
 
-        {/* Export notes */}
-        <a
-          href="/api/export"
-          download="my-notes.md"
-          className="block w-full text-center text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-        >
-          Export notes
-        </a>
+        {/* Export notes + keyboard help */}
+        <div className="flex gap-2">
+          <a
+            href="/api/export"
+            download="my-notes.md"
+            className="flex-1 text-center text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          >
+            Export notes
+          </a>
+          <button
+            type="button"
+            onClick={onShowHelp}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="shrink-0 text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors font-mono"
+          >
+            ?
+          </button>
+        </div>
       </div>
 
       {/* Scrollable tree */}

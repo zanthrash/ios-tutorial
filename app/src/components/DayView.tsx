@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -6,8 +6,8 @@ import rehypeRaw from 'rehype-raw';
 import { usePlan } from '../PlanContext';
 import { useProgress } from '../ProgressContext';
 import Markdown from './Markdown';
-import NotesEditor from './NotesEditor';
-import type { DayStatus, ChecklistItem } from '../../shared/types';
+import NotesEditor, { type NotesEditorHandle } from './NotesEditor';
+import type { DayStatus, ChecklistItem, Phase, Week, Day } from '../../shared/types';
 
 const STATUS_LABELS: Record<DayStatus, string> = {
   todo: 'To do',
@@ -23,6 +23,9 @@ const STATUS_COLORS: Record<DayStatus, string> = {
   skipped: 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600',
 };
 
+const STATUS_CYCLE: DayStatus[] = ['todo', 'in_progress', 'done', 'skipped'];
+
+// Outer component handles data lookup + early-return error states.
 export default function DayView() {
   const { phaseId, weekN, daySlug } = useParams<{
     phaseId: string;
@@ -30,7 +33,6 @@ export default function DayView() {
     daySlug: string;
   }>();
   const plan = usePlan();
-  const { progress, setDayStatus, setChecklistItem } = useProgress();
 
   if (!plan) return null;
 
@@ -61,8 +63,55 @@ export default function DayView() {
     );
   }
 
+  return <DayContent phase={phase} week={week} day={day} />;
+}
+
+// Inner component receives resolved data and can safely use hooks unconditionally.
+function DayContent({
+  phase,
+  week,
+  day,
+}: {
+  phase: Phase;
+  week: Week;
+  day: Day;
+}) {
+  const { progress, setDayStatus, setChecklistItem } = useProgress();
+  const notesRef = useRef<NotesEditorHandle>(null);
+
   const dayProgress = progress.days[day.id];
   const status: DayStatus = dayProgress?.status ?? 'todo';
+
+  // Keep a ref so the keyboard handler always sees the latest status without re-registering.
+  const statusRef = useRef(status);
+  statusRef.current = status;
+
+  // Keyboard shortcuts: Space to cycle status, n to focus notes.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as Element;
+      const tag = target.tagName.toLowerCase();
+      // Let normal typing happen in inputs/textareas/selects
+      if (tag === 'input' || tag === 'select') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === ' ' && tag !== 'textarea') {
+        e.preventDefault();
+        const idx = STATUS_CYCLE.indexOf(statusRef.current);
+        const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+        setDayStatus(day.id, next);
+        return;
+      }
+
+      if (e.key === 'n' && tag !== 'textarea') {
+        e.preventDefault();
+        notesRef.current?.focus();
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [day.id, setDayStatus]);
 
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
@@ -82,18 +131,21 @@ export default function DayView() {
         <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-50">
           {day.heading}
         </h1>
-        <select
-          value={status}
-          onChange={(e) => setDayStatus(day.id, e.target.value as DayStatus)}
-          className={`shrink-0 mt-1 text-xs font-medium rounded-md border px-2 py-1 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${STATUS_COLORS[status]}`}
-          aria-label="Day status"
-        >
-          {(Object.keys(STATUS_LABELS) as DayStatus[]).map((s) => (
-            <option key={s} value={s} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
-              {STATUS_LABELS[s]}
-            </option>
-          ))}
-        </select>
+        <div className="shrink-0 mt-1 flex flex-col items-end gap-1">
+          <select
+            value={status}
+            onChange={(e) => setDayStatus(day.id, e.target.value as DayStatus)}
+            className={`text-xs font-medium rounded-md border px-2 py-1 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${STATUS_COLORS[status]}`}
+            aria-label="Day status"
+          >
+            {(Object.keys(STATUS_LABELS) as DayStatus[]).map((s) => (
+              <option key={s} value={s} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+                {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+          <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono">Space cycles</span>
+        </div>
       </div>
 
       {day.timeBudget && (
@@ -133,7 +185,7 @@ export default function DayView() {
 
       {/* Day notes */}
       <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <NotesEditor scope="day" scopeId={day.id} />
+        <NotesEditor ref={notesRef} scope="day" scopeId={day.id} />
       </div>
 
       {/* Day navigation */}
@@ -171,7 +223,6 @@ function DayMarkdown({
             const match = /language-(\w+)/.exec(cls || '');
             const code = String(children).replace(/\n$/, '');
             if (match && code.includes('\n')) {
-              // Delegate to Markdown's CodeBlock via a wrapper
               return <FallbackCode code={code} lang={match[1]} />;
             }
             return (
@@ -230,10 +281,7 @@ function DayMarkdown({
   );
 }
 
-// Simple code block fallback (reuses pre-warm logic via Markdown for now).
 function FallbackCode({ code, lang }: { code: string; lang: string }) {
-  // Wrap in a Markdown render just for the code block — pull the shiki path.
-  // This is slightly redundant but avoids duplicating the Shiki singleton.
   return <Markdown>{`\`\`\`${lang}\n${code}\n\`\`\``}</Markdown>;
 }
 
@@ -242,14 +290,11 @@ function DayNav({
   week,
   day,
 }: {
-  phase: ReturnType<typeof usePlan>['phases'][number];
-  week: ReturnType<typeof usePlan>['phases'][number]['weeks'][number];
-  day: ReturnType<typeof usePlan>['phases'][number]['weeks'][number]['days'][number];
+  phase: Phase;
+  week: Week;
+  day: Day;
 }) {
-  const allDays: Array<{
-    day: typeof day;
-    week: typeof week;
-  }> = [];
+  const allDays: Array<{ day: Day; week: Week }> = [];
   for (const w of phase.weeks) {
     for (const d of w.days) {
       allDays.push({ day: d, week: w });
@@ -260,7 +305,7 @@ function DayNav({
   const prev = currentIndex > 0 ? allDays[currentIndex - 1] : null;
   const next = currentIndex < allDays.length - 1 ? allDays[currentIndex + 1] : null;
 
-  function dayUrl(w: typeof week, d: typeof day) {
+  function dayUrl(w: Week, d: Day) {
     const slug = d.id.split('/').pop()!;
     return `/phase/${phase.id}/week/${w.number}/day/${slug}`;
   }
@@ -272,6 +317,7 @@ function DayNav({
           <Link
             to={dayUrl(prev.week, prev.day)}
             className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+            title="Previous day (k)"
           >
             ← {prev.day.heading}
           </Link>
@@ -282,6 +328,7 @@ function DayNav({
           <Link
             to={dayUrl(next.week, next.day)}
             className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+            title="Next day (j)"
           >
             {next.day.heading} →
           </Link>
