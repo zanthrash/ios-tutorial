@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import db from '../db';
-import type { DayStatus, DayProgress, ChecklistProgress, ProgressResponse } from '../../shared/types';
+import type { DayStatus, DayProgress, ChecklistProgress, ResourceProgress, ResourceStatus, ProgressResponse } from '../../shared/types';
 
 const progress = new Hono();
 
@@ -27,7 +27,13 @@ progress.get('/progress', (c) => {
     };
   }
 
-  const response: ProgressResponse = { days, checklists };
+  const resourceRows = db.query('SELECT * FROM resource_progress').all() as ResourceProgress[];
+  const resources: Record<string, ResourceProgress> = {};
+  for (const row of resourceRows) {
+    resources[row.url] = row;
+  }
+
+  const response: ProgressResponse = { days, checklists, resources };
   return c.json(response);
 });
 
@@ -84,6 +90,33 @@ progress.patch('/progress/checklist', async (c) => {
   );
 
   const result: ChecklistProgress = { item_id: itemId, checked, updated_at: now };
+  return c.json(result);
+});
+
+// PATCH /api/progress/resource — update resource status (url in body to avoid encoding issues)
+progress.patch('/progress/resource', async (c) => {
+  const body = await c.req.json<{ url: string; status: ResourceStatus }>();
+  const { url, status } = body;
+
+  if (!url) return c.json({ error: 'url required' }, 400);
+
+  const valid: ResourceStatus[] = ['unread', 'reading', 'done', 'skip'];
+  if (!valid.includes(status)) {
+    return c.json({ error: 'Invalid status' }, 400);
+  }
+
+  const now = new Date().toISOString();
+
+  db.run(
+    `INSERT INTO resource_progress (url, status, updated_at)
+     VALUES (?, ?, ?)
+     ON CONFLICT(url) DO UPDATE SET
+       status = excluded.status,
+       updated_at = excluded.updated_at`,
+    [url, status, now]
+  );
+
+  const result: ResourceProgress = { url, status, updated_at: now };
   return c.json(result);
 });
 

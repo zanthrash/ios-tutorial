@@ -1,4 +1,4 @@
-import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse } from '../shared/types';
+import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse, ResourceStatus } from '../shared/types';
 
 export async function fetchPlan(): Promise<PlanResponse> {
   const res = await fetch('/api/plan');
@@ -28,6 +28,15 @@ export async function patchChecklistItem(itemId: string, checked: boolean): Prom
     body: JSON.stringify({ itemId, checked }),
   });
   if (!res.ok) throw new Error(`Failed to update checklist item: ${res.status}`);
+}
+
+export async function patchResourceStatus(url: string, status: ResourceStatus): Promise<void> {
+  const res = await fetch('/api/progress/resource', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, status }),
+  });
+  if (!res.ok) throw new Error(`Failed to update resource status: ${res.status}`);
 }
 
 export async function fetchDayNote(dayId: string): Promise<NoteResponse | null> {

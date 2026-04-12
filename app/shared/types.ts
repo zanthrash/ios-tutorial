@@ -65,9 +65,18 @@ export type ChecklistProgress = {
   updated_at: string;
 };
 
+export type ResourceStatus = 'unread' | 'reading' | 'done' | 'skip';
+
+export type ResourceProgress = {
+  url: string;
+  status: ResourceStatus;
+  updated_at: string;
+};
+
 export type ProgressResponse = {
   days: Record<string, DayProgress>;
   checklists: Record<string, ChecklistProgress>;
+  resources: Record<string, ResourceProgress>;
 };
 
 export type NoteResponse = {

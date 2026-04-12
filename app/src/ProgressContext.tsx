@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import type { ProgressResponse, DayStatus } from '../shared/types';
-import { patchDayStatus, patchChecklistItem } from './api';
+import type { ProgressResponse, DayStatus, ResourceStatus } from '../shared/types';
+import { patchDayStatus, patchChecklistItem, patchResourceStatus } from './api';
 
 type ProgressContextType = {
   progress: ProgressResponse;
   setDayStatus: (dayId: string, status: DayStatus) => void;
   setChecklistItem: (itemId: string, checked: boolean) => void;
+  setResourceStatus: (url: string, status: ResourceStatus) => void;
 };
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
@@ -52,8 +53,20 @@ export function ProgressProvider({
     patchChecklistItem(itemId, checked).catch(console.error);
   }, []);
 
+  const setResourceStatus = useCallback((url: string, status: ResourceStatus) => {
+    const now = new Date().toISOString();
+    setProgress((prev) => ({
+      ...prev,
+      resources: {
+        ...prev.resources,
+        [url]: { url, status, updated_at: now },
+      },
+    }));
+    patchResourceStatus(url, status).catch(console.error);
+  }, []);
+
   return (
-    <ProgressContext.Provider value={{ progress, setDayStatus, setChecklistItem }}>
+    <ProgressContext.Provider value={{ progress, setDayStatus, setChecklistItem, setResourceStatus }}>
       {children}
     </ProgressContext.Provider>
   );

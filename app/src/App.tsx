@@ -81,7 +81,7 @@ function AppInner() {
       });
   }, []);
 
-  const emptyProgress: ProgressResponse = { days: {}, checklists: {} };
+  const emptyProgress: ProgressResponse = { days: {}, checklists: {}, resources: {} };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
