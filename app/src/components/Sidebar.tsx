@@ -1,15 +1,35 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import type { Phase, Week } from '../../shared/types';
+import type { Phase, Week, ProgressResponse } from '../../shared/types';
 
 interface SidebarProps {
   phases: Phase[];
+  progress: ProgressResponse;
 }
 
-export default function Sidebar({ phases }: SidebarProps) {
+function statusDot(status: string | undefined) {
+  if (status === 'done') return 'text-green-500';
+  if (status === 'in_progress') return 'text-blue-400';
+  if (status === 'skipped') return 'text-gray-400';
+  return null;
+}
+
+function StatusIndicator({ status }: { status: string | undefined }) {
+  if (status === 'done') {
+    return <span className="shrink-0 text-green-500 text-xs leading-none">✓</span>;
+  }
+  if (status === 'in_progress') {
+    return <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />;
+  }
+  if (status === 'skipped') {
+    return <span className="shrink-0 text-gray-400 text-xs leading-none">—</span>;
+  }
+  return <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-transparent inline-block" />;
+}
+
+export default function Sidebar({ phases, progress }: SidebarProps) {
   const location = useLocation();
 
-  // Auto-expand the phase that contains the current route.
   function activePhaseId(): string | null {
     const m = location.pathname.match(/^\/phase\/(phase-\d+)/);
     return m ? m[1] : null;
@@ -21,7 +41,6 @@ export default function Sidebar({ phases }: SidebarProps) {
   });
   const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
 
-  // When route changes, ensure the active phase is expanded.
   useEffect(() => {
     const active = activePhaseId();
     if (active) {
@@ -59,19 +78,39 @@ export default function Sidebar({ phases }: SidebarProps) {
     return isActivePath(`/phase/${phaseId}/week/${weekNum}/day/${daySlug}`);
   }
 
+  // Overall progress stats
+  const allDayIds = phases.flatMap((p) => p.weeks.flatMap((w) => w.days.map((d) => d.id)));
+  const totalDays = allDayIds.length;
+  const doneDays = allDayIds.filter((id) => progress.days[id]?.status === 'done').length;
+  const inProgressDays = allDayIds.filter((id) => progress.days[id]?.status === 'in_progress').length;
+  const progressPct = totalDays > 0 ? Math.round((doneDays / totalDays) * 100) : 0;
+
   return (
-    <nav
-      aria-label="Tutorial navigation"
-      className="h-full flex flex-col"
-    >
+    <nav aria-label="Tutorial navigation" className="h-full flex flex-col">
       {/* Top bar */}
-      <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0">
+      <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0 space-y-2">
         <Link
           to="/"
-          className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+          className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 block"
         >
           iOS Tutorial
         </Link>
+
+        {/* Overall progress bar */}
+        <div>
+          <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
+            <span>{doneDays}/{totalDays} days done</span>
+            {inProgressDays > 0 && (
+              <span className="text-blue-400">{inProgressDays} in progress</span>
+            )}
+          </div>
+          <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-green-500 transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Scrollable tree */}
@@ -81,6 +120,7 @@ export default function Sidebar({ phases }: SidebarProps) {
             <PhaseItem
               key={phase.id}
               phase={phase}
+              progress={progress}
               isExpanded={expandedPhases.has(phase.id)}
               onToggle={() => togglePhase(phase.id)}
               expandedWeeks={expandedWeeks}
@@ -97,6 +137,7 @@ export default function Sidebar({ phases }: SidebarProps) {
 
 interface PhaseItemProps {
   phase: Phase;
+  progress: ProgressResponse;
   isExpanded: boolean;
   onToggle: () => void;
   expandedWeeks: Set<string>;
@@ -107,6 +148,7 @@ interface PhaseItemProps {
 
 function PhaseItem({
   phase,
+  progress,
   isExpanded,
   onToggle,
   expandedWeeks,
@@ -118,9 +160,13 @@ function PhaseItem({
     isActivePath(`/phase/${phase.id}/mastery`) ||
     isActivePath(`/phase/${phase.id}/resources`);
 
+  const phaseDayIds = phase.weeks.flatMap((w) => w.days.map((d) => d.id));
+  const phaseDone = phaseDayIds.filter((id) => progress.days[id]?.status === 'done').length;
+  const phaseTotal = phaseDayIds.length;
+  const allDone = phaseTotal > 0 && phaseDone === phaseTotal;
+
   return (
     <li>
-      {/* Phase header row */}
       <div className="flex items-center group">
         <button
           onClick={onToggle}
@@ -138,17 +184,25 @@ function PhaseItem({
         </button>
         <Link
           to={`/phase/${phase.id}`}
-          className={`flex-1 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-md mx-1 truncate ${
+          className={`flex-1 min-w-0 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-md mx-1 ${
             phaseActive
               ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
           }`}
         >
-          Phase {phase.number} — {phase.title}
+          <span className="flex items-center justify-between gap-1">
+            <span className="truncate">Phase {phase.number} — {phase.title}</span>
+            {allDone ? (
+              <span className="shrink-0 text-green-500 text-xs">✓</span>
+            ) : phaseDone > 0 ? (
+              <span className="shrink-0 text-gray-400 dark:text-gray-500 text-xs font-normal normal-case tracking-normal">
+                {phaseDone}/{phaseTotal}
+              </span>
+            ) : null}
+          </span>
         </Link>
       </div>
 
-      {/* Weeks + days */}
       {isExpanded && (
         <ul className="mt-0.5 mb-1">
           {phase.weeks.map((week) => (
@@ -156,13 +210,13 @@ function PhaseItem({
               key={week.id}
               phase={phase}
               week={week}
+              progress={progress}
               isExpanded={expandedWeeks.has(week.id)}
               onToggle={() => onToggleWeek(week.id)}
               isActiveDay={isActiveDay}
             />
           ))}
 
-          {/* Mastery gate + Resources links */}
           <li>
             <Link
               to={`/phase/${phase.id}/mastery`}
@@ -196,22 +250,21 @@ function PhaseItem({
 interface WeekItemProps {
   phase: Phase;
   week: Week;
+  progress: ProgressResponse;
   isExpanded: boolean;
   onToggle: () => void;
   isActiveDay: (phaseId: string, weekNum: number, daySlug: string) => boolean;
 }
 
-function WeekItem({ phase, week, isExpanded, onToggle, isActiveDay }: WeekItemProps) {
+function WeekItem({ phase, week, progress, isExpanded, onToggle, isActiveDay }: WeekItemProps) {
   const hasActiveDay = week.days.some((d) => {
     const slug = d.id.split('/').pop()!;
     return isActiveDay(phase.id, week.number, slug);
   });
 
-  // Auto-expand if a day in this week is active
   useEffect(() => {
     if (hasActiveDay && !isExpanded) onToggle();
-    // Only run on mount / when hasActiveDay changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasActiveDay]);
 
   return (
@@ -249,17 +302,21 @@ function WeekItem({ phase, week, isExpanded, onToggle, isActiveDay }: WeekItemPr
             const slug = day.id.split('/').pop()!;
             const to = `/phase/${phase.id}/week/${week.number}/day/${slug}`;
             const active = isActiveDay(phase.id, week.number, slug);
+            const dayStatus = progress.days[day.id]?.status;
             return (
               <li key={day.id}>
                 <Link
                   to={to}
-                  className={`block pl-14 pr-3 py-0.5 text-xs rounded-md mx-1 truncate ${
+                  className={`flex items-center gap-1.5 pl-12 pr-3 py-0.5 text-xs rounded-md mx-1 truncate ${
                     active
                       ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 font-medium'
+                      : dayStatus === 'done'
+                      ? 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                       : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
-                  {day.heading}
+                  <StatusIndicator status={dayStatus} />
+                  <span className="truncate">{day.heading}</span>
                 </Link>
               </li>
             );

@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { PlanContext } from './PlanContext';
+import { ProgressProvider } from './ProgressContext';
 import Sidebar from './components/Sidebar';
 import DayView from './components/DayView';
 import PhaseView from './components/PhaseView';
 import MasteryGate from './components/MasteryGate';
 import ResourcesPanel from './components/ResourcesPanel';
-import { fetchPlan } from './api';
-import type { PlanResponse } from '../shared/types';
+import { fetchPlan, fetchProgress } from './api';
+import type { PlanResponse, ProgressResponse } from '../shared/types';
 
 function Dashboard({ plan }: { plan: PlanResponse }) {
   const totalPhases = plan.phases.length;
@@ -63,13 +64,15 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
 
 function AppInner() {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
+  const [progress, setProgress] = useState<ProgressResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPlan()
-      .then((data) => {
-        setPlan(data);
+    Promise.all([fetchPlan(), fetchProgress()])
+      .then(([planData, progressData]) => {
+        setPlan(planData);
+        setProgress(progressData);
         setLoading(false);
       })
       .catch((e) => {
@@ -77,6 +80,8 @@ function AppInner() {
         setLoading(false);
       });
   }, []);
+
+  const emptyProgress: ProgressResponse = { days: {}, checklists: {} };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -88,7 +93,9 @@ function AppInner() {
         {error && (
           <p className="p-4 text-sm text-red-500">Error: {error}</p>
         )}
-        {plan && <Sidebar phases={plan.phases} />}
+        {plan && (
+          <Sidebar phases={plan.phases} progress={progress ?? emptyProgress} />
+        )}
       </aside>
 
       {/* Main content pane */}
@@ -103,18 +110,20 @@ function AppInner() {
             <p className="text-red-500">Failed to load plan: {error}</p>
           </div>
         )}
-        {plan && (
+        {plan && progress && (
           <PlanContext.Provider value={plan}>
-            <Routes>
-              <Route path="/" element={<Dashboard plan={plan} />} />
-              <Route path="/phase/:phaseId" element={<PhaseView />} />
-              <Route path="/phase/:phaseId/mastery" element={<MasteryGate />} />
-              <Route path="/phase/:phaseId/resources" element={<ResourcesPanel />} />
-              <Route
-                path="/phase/:phaseId/week/:weekN/day/:daySlug"
-                element={<DayView />}
-              />
-            </Routes>
+            <ProgressProvider initialProgress={progress}>
+              <Routes>
+                <Route path="/" element={<Dashboard plan={plan} />} />
+                <Route path="/phase/:phaseId" element={<PhaseView />} />
+                <Route path="/phase/:phaseId/mastery" element={<MasteryGate />} />
+                <Route path="/phase/:phaseId/resources" element={<ResourcesPanel />} />
+                <Route
+                  path="/phase/:phaseId/week/:weekN/day/:daySlug"
+                  element={<DayView />}
+                />
+              </Routes>
+            </ProgressProvider>
           </PlanContext.Provider>
         )}
       </main>

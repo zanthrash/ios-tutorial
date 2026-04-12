@@ -46,3 +46,26 @@ export type Phase = {
 };
 
 export type PlanResponse = { phases: Phase[] };
+
+// Progress types
+
+export type DayStatus = 'todo' | 'in_progress' | 'done' | 'skipped';
+
+export type DayProgress = {
+  day_id: string;
+  status: DayStatus;
+  started_at: string | null;
+  completed_at: string | null;
+  updated_at: string;
+};
+
+export type ChecklistProgress = {
+  item_id: string;
+  checked: boolean;
+  updated_at: string;
+};
+
+export type ProgressResponse = {
+  days: Record<string, DayProgress>;
+  checklists: Record<string, ChecklistProgress>;
+};

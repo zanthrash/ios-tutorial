@@ -1,6 +1,26 @@
+import { useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { usePlan } from '../PlanContext';
+import { useProgress } from '../ProgressContext';
 import Markdown from './Markdown';
+import type { DayStatus, ChecklistItem } from '../../shared/types';
+
+const STATUS_LABELS: Record<DayStatus, string> = {
+  todo: 'To do',
+  in_progress: 'In progress',
+  done: 'Done',
+  skipped: 'Skipped',
+};
+
+const STATUS_COLORS: Record<DayStatus, string> = {
+  todo: 'text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600',
+  in_progress: 'text-blue-600 dark:text-blue-400 border-blue-400 dark:border-blue-600',
+  done: 'text-green-600 dark:text-green-400 border-green-400 dark:border-green-600',
+  skipped: 'text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600',
+};
 
 export default function DayView() {
   const { phaseId, weekN, daySlug } = useParams<{
@@ -9,6 +29,7 @@ export default function DayView() {
     daySlug: string;
   }>();
   const plan = usePlan();
+  const { progress, setDayStatus, setChecklistItem } = useProgress();
 
   if (!plan) return null;
 
@@ -39,6 +60,9 @@ export default function DayView() {
     );
   }
 
+  const dayProgress = progress.days[day.id];
+  const status: DayStatus = dayProgress?.status ?? 'todo';
+
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
       {/* Breadcrumb */}
@@ -52,10 +76,25 @@ export default function DayView() {
         <span className="text-gray-700 dark:text-gray-200 font-medium">{day.heading}</span>
       </nav>
 
-      {/* Heading */}
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-1">
-        {day.heading}
-      </h1>
+      {/* Heading + status row */}
+      <div className="flex items-start gap-4 mb-1">
+        <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-50">
+          {day.heading}
+        </h1>
+        <select
+          value={status}
+          onChange={(e) => setDayStatus(day.id, e.target.value as DayStatus)}
+          className={`shrink-0 mt-1 text-xs font-medium rounded-md border px-2 py-1 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${STATUS_COLORS[status]}`}
+          aria-label="Day status"
+        >
+          {(Object.keys(STATUS_LABELS) as DayStatus[]).map((s) => (
+            <option key={s} value={s} className="text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+              {STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      </div>
+
       {day.timeBudget && (
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           Time budget: {day.timeBudget}
@@ -71,17 +110,125 @@ export default function DayView() {
         </div>
       )}
 
-      {/* Day body */}
+      {/* Day body with interactive checklists */}
       {day.bodyMarkdown ? (
-        <Markdown>{day.bodyMarkdown}</Markdown>
+        <DayMarkdown
+          markdown={day.bodyMarkdown}
+          checklistItems={day.inlineChecklistItems}
+          checklistProgress={progress.checklists}
+          onChecklistChange={setChecklistItem}
+        />
       ) : (
         <p className="text-gray-400 italic">No content for this day.</p>
+      )}
+
+      {/* Checklist summary if there are items */}
+      {day.inlineChecklistItems.length > 0 && (
+        <div className="mt-6 text-xs text-gray-400 dark:text-gray-500">
+          {day.inlineChecklistItems.filter((item) => progress.checklists[item.id]?.checked).length}
+          /{day.inlineChecklistItems.length} tasks checked
+        </div>
       )}
 
       {/* Day navigation */}
       <DayNav phase={phase} week={week} day={day} />
     </div>
   );
+}
+
+// Renders day markdown with interactive checkboxes wired to progress state.
+function DayMarkdown({
+  markdown,
+  checklistItems,
+  checklistProgress,
+  onChecklistChange,
+}: {
+  markdown: string;
+  checklistItems: ChecklistItem[];
+  checklistProgress: Record<string, { checked: boolean }>;
+  onChecklistChange: (itemId: string, checked: boolean) => void;
+}) {
+  // Counter is reset each render to map checkbox positions to item IDs.
+  const indexRef = useRef(0);
+  indexRef.current = 0;
+
+  return (
+    <div className="md-body text-gray-800 dark:text-gray-200">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          pre({ children }) {
+            return <>{children}</>;
+          },
+          code({ className: cls, children, ...props }) {
+            const match = /language-(\w+)/.exec(cls || '');
+            const code = String(children).replace(/\n$/, '');
+            if (match && code.includes('\n')) {
+              // Delegate to Markdown's CodeBlock via a wrapper
+              return <FallbackCode code={code} lang={match[1]} />;
+            }
+            return (
+              <code
+                className="bg-gray-100 dark:bg-gray-800 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded text-[0.85em] font-mono"
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+          a({ href, children, ...props }) {
+            return (
+              <a
+                href={href}
+                target={href?.startsWith('http') ? '_blank' : undefined}
+                rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+                {...props}
+              >
+                {children}
+              </a>
+            );
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-3">
+                {children}
+              </blockquote>
+            );
+          },
+          input({ type, ...props }) {
+            if (type === 'checkbox') {
+              const index = indexRef.current++;
+              const item = checklistItems[index];
+              if (!item) {
+                return <input type="checkbox" readOnly {...props} />;
+              }
+              const isChecked = checklistProgress[item.id]?.checked ?? false;
+              return (
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={(e) => onChecklistChange(item.id, e.target.checked)}
+                  className="mr-2 mt-0.5 cursor-pointer accent-blue-500"
+                />
+              );
+            }
+            return <input type={type} {...props} />;
+          },
+        }}
+      >
+        {markdown}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+// Simple code block fallback (reuses pre-warm logic via Markdown for now).
+function FallbackCode({ code, lang }: { code: string; lang: string }) {
+  // Wrap in a Markdown render just for the code block — pull the shiki path.
+  // This is slightly redundant but avoids duplicating the Shiki singleton.
+  return <Markdown>{`\`\`\`${lang}\n${code}\n\`\`\``}</Markdown>;
 }
 
 function DayNav({
@@ -93,7 +240,6 @@ function DayNav({
   week: ReturnType<typeof usePlan>['phases'][number]['weeks'][number];
   day: ReturnType<typeof usePlan>['phases'][number]['weeks'][number]['days'][number];
 }) {
-  // Collect all days across all weeks in this phase in order.
   const allDays: Array<{
     day: typeof day;
     week: typeof week;
