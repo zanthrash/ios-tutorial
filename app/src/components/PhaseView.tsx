@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { usePlan } from '../PlanContext';
 import Markdown from './Markdown';
+import NotesEditor from './NotesEditor';
 
 export default function PhaseView() {
   const { phaseId } = useParams<{ phaseId: string }>();
@@ -51,6 +52,11 @@ export default function PhaseView() {
           Resources
         </Link>
       </div>
+
+      {/* Phase notes */}
+      <section className="mb-8">
+        <NotesEditor scope="phase" scopeId={phase.id} />
+      </section>
 
       {/* Week overview */}
       <section className="mb-8">

@@ -69,3 +69,8 @@ export type ProgressResponse = {
   days: Record<string, DayProgress>;
   checklists: Record<string, ChecklistProgress>;
 };
+
+export type NoteResponse = {
+  body: string;
+  updated_at: string;
+};

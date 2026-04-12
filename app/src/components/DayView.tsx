@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { usePlan } from '../PlanContext';
 import { useProgress } from '../ProgressContext';
 import Markdown from './Markdown';
+import NotesEditor from './NotesEditor';
 import type { DayStatus, ChecklistItem } from '../../shared/types';
 
 const STATUS_LABELS: Record<DayStatus, string> = {
@@ -129,6 +130,11 @@ export default function DayView() {
           /{day.inlineChecklistItems.length} tasks checked
         </div>
       )}
+
+      {/* Day notes */}
+      <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <NotesEditor scope="day" scopeId={day.id} />
+      </div>
 
       {/* Day navigation */}
       <DayNav phase={phase} week={week} day={day} />
