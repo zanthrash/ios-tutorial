@@ -4,6 +4,7 @@ import plan from './routes/plan';
 import progress from './routes/progress';
 import notes from './routes/notes';
 import search from './routes/search';
+import exportRoute from './routes/export';
 
 const app = new Hono();
 
@@ -13,6 +14,7 @@ app.route('/api', plan);
 app.route('/api', progress);
 app.route('/api', notes);
 app.route('/api', search);
+app.route('/api', exportRoute);
 
 app.get('/', (c) => c.text('iOS Tutorial API — see /api/plan'));
 

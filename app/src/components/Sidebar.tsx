@@ -115,6 +115,15 @@ export default function Sidebar({ phases, progress }: SidebarProps) {
             />
           </div>
         </div>
+
+        {/* Export notes */}
+        <a
+          href="/api/export"
+          download="my-notes.md"
+          className="block w-full text-center text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+        >
+          Export notes
+        </a>
       </div>
 
       {/* Scrollable tree */}
