@@ -96,3 +96,19 @@ export type SearchResponse = {
   query: string;
   results: SearchResult[];
 };
+
+export type OrphanRecord = {
+  id: string;
+  type: 'day-progress' | 'checklist' | 'day-note' | 'phase-note' | 'resource';
+  detail?: string;
+  updated_at: string;
+};
+
+export type OrphansResponse = {
+  total: number;
+  dayProgress: OrphanRecord[];
+  checklists: OrphanRecord[];
+  dayNotes: OrphanRecord[];
+  phaseNotes: OrphanRecord[];
+  resources: OrphanRecord[];
+};

@@ -9,11 +9,18 @@ import MasteryGate from './components/MasteryGate';
 import ResourcesPanel from './components/ResourcesPanel';
 import SearchResults from './components/SearchResults';
 import KeyboardHelp from './components/KeyboardHelp';
+import OrphanWarning from './components/OrphanWarning';
 import { useGlobalKeyboard } from './hooks/useGlobalKeyboard';
-import { fetchPlan, fetchProgress } from './api';
-import type { PlanResponse, ProgressResponse } from '../shared/types';
+import { fetchPlan, fetchProgress, fetchOrphans } from './api';
+import type { PlanResponse, ProgressResponse, OrphansResponse } from '../shared/types';
 
 function Dashboard({ plan }: { plan: PlanResponse }) {
+  const [orphans, setOrphans] = useState<OrphansResponse | null>(null);
+
+  useEffect(() => {
+    fetchOrphans().then(setOrphans).catch(() => {/* non-fatal */});
+  }, []);
+
   const totalPhases = plan.phases.length;
   const totalDays = plan.phases.reduce(
     (sum, p) => sum + p.weeks.reduce((s, w) => s + w.days.length, 0),
@@ -28,6 +35,10 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
       <p className="text-gray-500 dark:text-gray-400 mb-8">
         {totalPhases} phases · {totalDays} days · 12–18 month program
       </p>
+
+      {orphans && orphans.total > 0 && (
+        <OrphanWarning orphans={orphans} onCleaned={() => setOrphans({ ...orphans, total: 0, dayProgress: [], checklists: [], dayNotes: [], phaseNotes: [], resources: [] })} />
+      )}
 
       <ul className="space-y-3">
         {plan.phases.map((phase) => {
