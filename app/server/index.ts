@@ -6,6 +6,7 @@ import notes from './routes/notes';
 import search from './routes/search';
 import exportRoute from './routes/export';
 import orphans from './routes/orphans';
+import { startWatcher } from './watcher';
 
 const app = new Hono();
 
@@ -19,6 +20,8 @@ app.route('/api', exportRoute);
 app.route('/api', orphans);
 
 app.get('/', (c) => c.text('iOS Tutorial API — see /api/plan'));
+
+startWatcher();
 
 export default {
   port: 5174,
