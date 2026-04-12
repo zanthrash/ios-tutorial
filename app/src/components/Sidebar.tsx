@@ -218,16 +218,7 @@ function PhaseItem({
           ))}
 
           <li>
-            <Link
-              to={`/phase/${phase.id}/mastery`}
-              className={`block pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 ${
-                isActivePath(`/phase/${phase.id}/mastery`)
-                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                  : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
-            >
-              Mastery gate
-            </Link>
+            <MasteryGateLink phase={phase} progress={progress} isActivePath={isActivePath} />
           </li>
           <li>
             <Link
@@ -244,6 +235,40 @@ function PhaseItem({
         </ul>
       )}
     </li>
+  );
+}
+
+function MasteryGateLink({
+  phase,
+  progress,
+  isActivePath,
+}: {
+  phase: Phase;
+  progress: ProgressResponse;
+  isActivePath: (path: string) => boolean;
+}) {
+  const total = phase.masteryGate.checklist.length;
+  const checked = phase.masteryGate.checklist.filter(
+    (item) => progress.checklists[item.id]?.checked
+  ).length;
+  const passed = total > 0 && checked === total;
+
+  return (
+    <Link
+      to={`/phase/${phase.id}/mastery`}
+      className={`flex items-center gap-1.5 pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 ${
+        isActivePath(`/phase/${phase.id}/mastery`)
+          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+          : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+      }`}
+    >
+      {passed ? (
+        <span className="text-green-500 leading-none">✓</span>
+      ) : total > 0 && checked > 0 ? (
+        <span className="text-gray-400 dark:text-gray-600 font-normal">{checked}/{total}</span>
+      ) : null}
+      Mastery gate
+    </Link>
   );
 }
 

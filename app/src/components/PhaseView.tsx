@@ -1,11 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
 import { usePlan } from '../PlanContext';
+import { useProgress } from '../ProgressContext';
 import Markdown from './Markdown';
 import NotesEditor from './NotesEditor';
 
 export default function PhaseView() {
   const { phaseId } = useParams<{ phaseId: string }>();
   const plan = usePlan();
+  const { progress } = useProgress();
 
   if (!plan) return null;
 
@@ -19,6 +21,12 @@ export default function PhaseView() {
   }
 
   const totalDays = phase.weeks.reduce((sum, w) => sum + w.days.length, 0);
+
+  const masteryTotal = phase.masteryGate.checklist.length;
+  const masteryChecked = phase.masteryGate.checklist.filter(
+    (item) => progress.checklists[item.id]?.checked
+  ).length;
+  const masteryPassed = masteryTotal > 0 && masteryChecked === masteryTotal;
 
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
@@ -41,8 +49,13 @@ export default function PhaseView() {
       <div className="flex gap-3 mb-8">
         <Link
           to={`/phase/${phase.id}/mastery`}
-          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="text-sm px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5"
         >
+          {masteryPassed ? (
+            <span className="text-green-500 text-xs">✓</span>
+          ) : masteryTotal > 0 ? (
+            <span className="text-xs text-gray-400">{masteryChecked}/{masteryTotal}</span>
+          ) : null}
           Mastery gate
         </Link>
         <Link
