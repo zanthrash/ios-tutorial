@@ -97,6 +97,15 @@ export type SearchResponse = {
   results: SearchResult[];
 };
 
+export type RecentNote = {
+  id: string;
+  type: 'day' | 'phase';
+  label: string;
+  snippet: string;
+  updated_at: string;
+  url: string;
+};
+
 export type OrphanRecord = {
   id: string;
   type: 'day-progress' | 'checklist' | 'day-note' | 'phase-note' | 'resource';

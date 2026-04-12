@@ -1,4 +1,4 @@
-import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse, ResourceStatus, SearchResponse, OrphansResponse } from '../shared/types';
+import type { PlanResponse, ProgressResponse, DayStatus, NoteResponse, ResourceStatus, SearchResponse, OrphansResponse, RecentNote } from '../shared/types';
 
 export async function fetchPlan(): Promise<PlanResponse> {
   const res = await fetch('/api/plan');
@@ -75,6 +75,12 @@ export async function searchContent(q: string): Promise<SearchResponse> {
   const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
   if (!res.ok) throw new Error(`Search failed: ${res.status}`);
   return res.json() as Promise<SearchResponse>;
+}
+
+export async function fetchRecentNotes(limit = 5): Promise<RecentNote[]> {
+  const res = await fetch(`/api/notes/recent?limit=${limit}`);
+  if (!res.ok) throw new Error(`Failed to fetch recent notes: ${res.status}`);
+  return res.json() as Promise<RecentNote[]>;
 }
 
 export async function fetchOrphans(): Promise<OrphansResponse> {
