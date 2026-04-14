@@ -94,7 +94,7 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
     <div className="max-w-2xl mx-auto px-8 py-12 space-y-8">
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50 mb-1">
+        <h1 className="text-[1.75rem] font-bold text-gray-900 dark:text-gray-50 tracking-tight mb-1">
           iOS Mastery Curriculum
         </h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -112,7 +112,7 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
 
       {/* Progress */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
           Progress
         </h2>
         <div className="mb-2">
@@ -124,9 +124,9 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
             </span>
             <span className="font-semibold text-gray-800 dark:text-gray-200">{progressPct}%</span>
           </div>
-          <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
             <div
-              className="h-full rounded-full bg-green-500 transition-all duration-500"
+              className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -142,32 +142,32 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
       {/* Continue */}
       {currentDay && (
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
             Continue
           </h2>
           <Link
             to={`/phase/${currentDay.phase.id}/week/${currentDay.week.number}/day/${currentDay.day.id.split('/').pop()}`}
-            className="block p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/30 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors group"
+            className="block p-4 rounded-lg border border-blue-200 dark:border-blue-800/70 bg-gradient-to-br from-blue-50 to-indigo-50/40 dark:from-blue-950/40 dark:to-indigo-950/20 hover:border-blue-300 dark:hover:border-blue-700 hover:from-blue-50 hover:to-blue-50/60 dark:hover:from-blue-950/60 dark:hover:to-indigo-950/30 transition-all group shadow-sm shadow-blue-100/50 dark:shadow-blue-900/20"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs text-blue-500 dark:text-blue-400 mb-0.5">
+                <p className="text-[11px] font-medium text-blue-500 dark:text-blue-400 mb-1 uppercase tracking-wider">
                   Phase {currentDay.phase.number} · Week {currentDay.week.number}
                 </p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-50 truncate leading-snug">
                   {currentDay.day.heading}
                 </p>
                 {currentDay.day.timeBudget && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{currentDay.day.timeBudget}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{currentDay.day.timeBudget}</p>
                 )}
               </div>
-              <div className="shrink-0 flex items-center gap-2">
+              <div className="shrink-0 flex items-center gap-2 mt-0.5">
                 {progress.days[currentDay.day.id]?.status === 'in_progress' && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 font-medium">
                     in progress
                   </span>
                 )}
-                <span className="text-blue-400 dark:text-blue-500 group-hover:translate-x-0.5 transition-transform text-sm">→</span>
+                <span className="text-blue-400 dark:text-blue-500 group-hover:translate-x-0.5 transition-transform text-base font-light">→</span>
               </div>
             </div>
           </Link>
@@ -177,7 +177,7 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
       {/* Recent notes */}
       {recentNotes.length > 0 && (
         <section>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
             Recent Notes
           </h2>
           <ul className="space-y-2">
@@ -201,7 +201,7 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
 
       {/* Phase list */}
       <section>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-3">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
           Phases
         </h2>
         <ul className="space-y-2">
@@ -217,7 +217,7 @@ function Dashboard({ plan }: { plan: PlanResponse }) {
               <li key={phase.id}>
                 <Link
                   to={`/phase/${phase.id}`}
-                  className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors"
+                  className="block p-3 rounded-lg border border-gray-200 dark:border-gray-700/60 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <div className="flex items-baseline gap-2 min-w-0">
@@ -289,7 +289,7 @@ function AppInner() {
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {/* Sidebar */}
-      <aside className="w-80 shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 overflow-hidden flex flex-col">
+      <aside className="w-80 shrink-0 border-r border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-950 overflow-hidden flex flex-col">
         {loading && (
           <p className="p-4 text-sm text-gray-400">Loading plan…</p>
         )}

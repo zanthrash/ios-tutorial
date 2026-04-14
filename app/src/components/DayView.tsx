@@ -116,26 +116,26 @@ function DayContent({
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6 flex gap-1.5 items-center flex-wrap">
-        <Link to={`/phase/${phase.id}`} className="hover:text-gray-700 dark:hover:text-gray-200">
+      <nav className="text-xs text-gray-400 dark:text-gray-500 mb-7 flex gap-1.5 items-center flex-wrap">
+        <Link to={`/phase/${phase.id}`} className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
           Phase {phase.number}
         </Link>
-        <span>/</span>
-        <span>Week {week.number} — {week.title}</span>
-        <span>/</span>
-        <span className="text-gray-700 dark:text-gray-200 font-medium">{day.heading}</span>
+        <span className="text-gray-300 dark:text-gray-700">/</span>
+        <span>Week {week.number}</span>
+        <span className="text-gray-300 dark:text-gray-700">/</span>
+        <span className="text-gray-600 dark:text-gray-300 font-medium truncate max-w-xs">{day.heading}</span>
       </nav>
 
       {/* Heading + status row */}
       <div className="flex items-start gap-4 mb-1">
-        <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-50">
+        <h1 className="flex-1 text-[1.6rem] font-bold text-gray-900 dark:text-gray-50 tracking-tight leading-tight">
           {day.heading}
         </h1>
-        <div className="shrink-0 mt-1 flex flex-col items-end gap-1">
+        <div className="shrink-0 mt-1 flex flex-col items-end gap-1.5">
           <select
             value={status}
             onChange={(e) => setDayStatus(day.id, e.target.value as DayStatus)}
-            className={`text-xs font-medium rounded-md border px-2 py-1 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${STATUS_COLORS[status]}`}
+            className={`text-xs font-medium rounded-md border px-2.5 py-1 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${STATUS_COLORS[status]}`}
             aria-label="Day status"
           >
             {(Object.keys(STATUS_LABELS) as DayStatus[]).map((s) => (
@@ -144,7 +144,7 @@ function DayContent({
               </option>
             ))}
           </select>
-          <span className="text-[10px] text-gray-400 dark:text-gray-600 font-mono">Space cycles</span>
+          <span className="text-[10px] text-gray-300 dark:text-gray-700 font-mono">Space cycles</span>
         </div>
       </div>
 
@@ -156,9 +156,10 @@ function DayContent({
 
       {/* Week goal if this is the first day */}
       {week.goal && week.days[0] === day && (
-        <div className="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 px-4 py-3">
-          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-            Week goal: {week.goal}
+        <div className="mb-6 rounded-lg bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800/50 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-400 dark:text-blue-500 mb-0.5">Week goal</p>
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            {week.goal}
           </p>
         </div>
       )}
@@ -311,15 +312,16 @@ function DayNav({
   }
 
   return (
-    <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-between gap-4">
+    <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-between gap-4">
       <div>
         {prev && (
           <Link
             to={dayUrl(prev.week, prev.day)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1.5 transition-colors group"
             title="Previous day (k)"
           >
-            ← {prev.day.heading}
+            <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+            <span className="truncate max-w-[200px]">{prev.day.heading}</span>
           </Link>
         )}
       </div>
@@ -327,10 +329,11 @@ function DayNav({
         {next && (
           <Link
             to={dayUrl(next.week, next.day)}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+            className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1.5 transition-colors group text-right"
             title="Next day (j)"
           >
-            {next.day.heading} →
+            <span className="truncate max-w-[200px]">{next.day.heading}</span>
+            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
           </Link>
         )}
       </div>

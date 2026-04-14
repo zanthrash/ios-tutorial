@@ -90,52 +90,52 @@ export default function Sidebar({ phases, progress, onShowHelp }: SidebarProps) 
   return (
     <nav aria-label="Tutorial navigation" className="h-full flex flex-col">
       {/* Top bar */}
-      <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700 shrink-0 space-y-2">
-        <Link
-          to="/"
-          className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 block"
-        >
-          iOS Tutorial
-        </Link>
+      <div className="px-3 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800 shrink-0 space-y-3">
+        <div className="flex items-center justify-between">
+          <Link
+            to="/"
+            className="text-[13px] font-semibold tracking-tight text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            iOS Tutorial
+          </Link>
+          <button
+            type="button"
+            onClick={onShowHelp}
+            title="Keyboard shortcuts (?)"
+            aria-label="Show keyboard shortcuts"
+            className="w-6 h-6 flex items-center justify-center rounded text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors font-mono"
+          >
+            ?
+          </button>
+        </div>
 
         {/* Search */}
         <SearchBar />
 
         {/* Overall progress bar */}
         <div>
-          <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mb-1">
-            <span>{doneDays}/{totalDays} days done</span>
+          <div className="flex justify-between text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">
+            <span className="tabular-nums">{doneDays}/{totalDays} days</span>
             {inProgressDays > 0 && (
-              <span className="text-blue-400">{inProgressDays} in progress</span>
+              <span className="text-blue-400 dark:text-blue-500">{inProgressDays} active</span>
             )}
           </div>
-          <div className="h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+          <div className="h-1 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
             <div
-              className="h-full rounded-full bg-green-500 transition-all duration-300"
+              className="h-full rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-300"
               style={{ width: `${progressPct}%` }}
             />
           </div>
         </div>
 
-        {/* Export notes + keyboard help */}
-        <div className="flex gap-2">
-          <a
-            href="/api/export"
-            download="my-notes.md"
-            className="flex-1 text-center text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-          >
-            Export notes
-          </a>
-          <button
-            type="button"
-            onClick={onShowHelp}
-            title="Keyboard shortcuts (?)"
-            aria-label="Show keyboard shortcuts"
-            className="shrink-0 text-xs py-1 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-500 transition-colors font-mono"
-          >
-            ?
-          </button>
-        </div>
+        {/* Export notes */}
+        <a
+          href="/api/export"
+          download="my-notes.md"
+          className="block w-full text-center text-[11px] py-1 px-2 rounded border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+        >
+          Export notes
+        </a>
       </div>
 
       {/* Scrollable tree */}
@@ -209,10 +209,10 @@ function PhaseItem({
         </button>
         <Link
           to={`/phase/${phase.id}`}
-          className={`flex-1 min-w-0 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide rounded-md mx-1 ${
+          className={`flex-1 min-w-0 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider rounded-md mx-1 transition-colors ${
             phaseActive
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60'
           }`}
         >
           <span className="flex items-center justify-between gap-1">
@@ -248,10 +248,10 @@ function PhaseItem({
           <li>
             <Link
               to={`/phase/${phase.id}/resources`}
-              className={`block pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 mb-1 ${
+              className={`block pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 mb-1 transition-colors ${
                 isActivePath(`/phase/${phase.id}/resources`)
-                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                  : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60'
               }`}
             >
               Resources
@@ -281,10 +281,10 @@ function MasteryGateLink({
   return (
     <Link
       to={`/phase/${phase.id}/mastery`}
-      className={`flex items-center gap-1.5 pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 ${
+      className={`flex items-center gap-1.5 pl-10 pr-3 py-0.5 text-xs rounded-md mx-1 transition-colors ${
         isActivePath(`/phase/${phase.id}/mastery`)
-          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-          : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+          : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60'
       }`}
     >
       {passed ? (
@@ -336,10 +336,10 @@ function WeekItem({ phase, week, progress, isExpanded, onToggle, isActiveDay }: 
         </button>
         <button
           onClick={onToggle}
-          className={`flex-1 text-left px-2 py-1 text-xs rounded-md mx-1 truncate ${
+          className={`flex-1 text-left px-2 py-1 text-xs rounded-md mx-1 truncate transition-colors ${
             hasActiveDay
-              ? 'text-gray-800 dark:text-gray-200 font-medium'
-              : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              ? 'text-gray-700 dark:text-gray-200 font-medium'
+              : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
           Week {week.number} — {week.title}
@@ -357,12 +357,12 @@ function WeekItem({ phase, week, progress, isExpanded, onToggle, isActiveDay }: 
               <li key={day.id}>
                 <Link
                   to={to}
-                  className={`flex items-center gap-1.5 pl-12 pr-3 py-0.5 text-xs rounded-md mx-1 truncate ${
+                  className={`flex items-center gap-1.5 pl-12 pr-3 py-0.5 text-xs rounded-md mx-1 truncate transition-colors ${
                     active
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 font-medium'
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 font-medium'
                       : dayStatus === 'done'
-                      ? 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                      : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      ? 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/60'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/60'
                   }`}
                 >
                   <StatusIndicator status={dayStatus} />
