@@ -1,6 +1,5 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { useState, useEffect } from 'react';
 import type { Highlighter } from 'shiki';
 
@@ -96,13 +95,12 @@ export default function Markdown({ children, className }: MarkdownProps) {
     <div className={`md-body text-gray-800 dark:text-gray-200 ${className ?? ''}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
         components={{
           // Strip the default <pre> wrapper — CodeBlock renders its own.
           pre({ children }) {
             return <>{children}</>;
           },
-          code({ className: cls, children, ...props }) {
+          code({ className: cls, children, node: _node, ...props }) {
             const match = /language-(\w+)/.exec(cls || '');
             const code = String(children).replace(/\n$/, '');
             if (match && code.includes('\n')) {
@@ -118,7 +116,7 @@ export default function Markdown({ children, className }: MarkdownProps) {
               </code>
             );
           },
-          a({ href, children, ...props }) {
+          a({ href, children, node: _node, ...props }) {
             return (
               <a
                 href={href}
@@ -131,15 +129,17 @@ export default function Markdown({ children, className }: MarkdownProps) {
               </a>
             );
           },
-          blockquote({ children }) {
+          blockquote({ children, node: _node, ...props }) {
             return (
-              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-3">
+              <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-3" {...props}>
                 {children}
               </blockquote>
             );
           },
         }}
-      />
+      >
+        {children}
+      </ReactMarkdown>
     </div>
   );
 }
